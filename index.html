@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revision Scheduler</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        #topics-list, #revision-list { margin: 20px auto; padding: 10px; border: 1px solid #ccc; width: 50%; text-align: left; }
+        button { margin-top: 10px; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>Revision Scheduler</h1>
+    <h3 id="current-date"></h3>
+    
+    <div>
+        <input type="text" id="topic-input" placeholder="Enter topic" onkeypress="handleKeyPress(event)">
+        <button onclick="addTopic()">Add Topic</button>
+    </div>
+    
+    <h2>Today's Revision Topics</h2>
+    <ul id="revision-list"></ul>
+    
+    <h2>All Studied Topics</h2>
+    <ul id="topics-list"></ul>
+
+    <script>
+        let topics = JSON.parse(localStorage.getItem('topics')) || [];
+        let schedule = JSON.parse(localStorage.getItem('schedule')) || {};
+
+        function saveData() {
+            localStorage.setItem('topics', JSON.stringify(topics));
+            localStorage.setItem('schedule', JSON.stringify(schedule));
+        }
+
+        function addTopic() {
+            let topic = document.getElementById('topic-input').value.trim();
+            if (topic && !topics.includes(topic)) {
+                topics.push(topic);
+                updateSchedule();
+                saveData();
+                displayTopics();
+            }
+            document.getElementById('topic-input').value = '';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                addTopic();
+            }
+        }
+
+        function updateSchedule() {
+            schedule = {};
+            let today = new Date();
+            for (let i = 0; i < topics.length; i++) {
+                let revisionDayIndex = i % 20; // Ensuring the cycle repeats every 20 days
+                for (let cycle = 0; cycle < Math.ceil(topics.length / 20); cycle++) {
+                    let revisionDate = new Date();
+                    revisionDate.setDate(today.getDate() + revisionDayIndex + (cycle * 20));
+                    let dateStr = revisionDate.toISOString().split('T')[0];
+                    if (!schedule[dateStr]) schedule[dateStr] = [];
+                    schedule[dateStr].push(topics[i]);
+                }
+            }
+        }
+
+        function displayTopics() {
+            document.getElementById('topics-list').innerHTML = topics.map(t => `<li>${t}</li>`).join('');
+            let todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('revision-list').innerHTML = (schedule[todayStr] || []).map(t => `<li>${t}</li>`).join('');
+            document.getElementById('current-date').innerText = `Today's Date: ${todayStr}`;
+        }
+
+        displayTopics();
+    </script>
+</body>
+</html>
